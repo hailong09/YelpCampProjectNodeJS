@@ -7,8 +7,13 @@ const session = require('express-session');
 const flash = require('connect-flash');
 const ExpressError = require('./utils/ExpressError');
 const methodOverride = require('method-override');
-const campgrounds = require('./routes/campgrounds');
-const reviews = require('./routes/reviews');
+const campgroundsRoutes = require('./routes/campgrounds');
+const reviewsRoutes = require('./routes/reviews');
+const User = require('./models/user');
+const usersRoutes = require('./routes/users');
+
+const passport = require('passport'),
+      LocalStrategy = require('passport-local').Strategy;
 //connect to mongodb
 mongoose.connect('mongodb://localhost:27017/yelpCamp', {useNewUrlParser: true, 
 useUnifiedTopology: true, useCreateIndex:true,useFindAndModify: false});
@@ -34,6 +39,8 @@ app.use(express.json());
 app.use(methodOverride("_method"));
 app.use(express.static(path.join(__dirname, "public")));
 
+
+
 const sessionConfig = {
     secret: 'thisshoudbeabettersecret',
     resave: false,
@@ -47,15 +54,29 @@ const sessionConfig = {
 
 app.use(session(sessionConfig))
 app.use(flash());
+
+
+//passport middleware
+app.use(passport.initialize());
+app.use(passport.session());
+
+// use static authenticate method of model in LocalStrategy
+passport.use(User.createStrategy());
+// use static serialize and deserialize of model for passport session support
+passport.serializeUser(User.serializeUser()); //function add user into session
+passport.deserializeUser(User.deserializeUser()); //function out user into session
+
 app.use((req, res, next) => {
+    res.locals.currentUser = req.user;
     res.locals.success = req.flash('success');
     res.locals.error = req.flash('error');
     next();
 })
 
 
-app.use('/campgrounds', campgrounds)
-app.use('/campgrounds/:id/reviews', reviews)
+app.use('/', usersRoutes);
+app.use('/campgrounds', campgroundsRoutes)
+app.use('/campgrounds/:id/reviews', reviewsRoutes)
 
 app.get('/', (req, res) => {
     res.render('home')
