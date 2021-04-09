@@ -17,6 +17,17 @@ const campGroundSchema = new Schema({
     image: [
         imageSchema
     ],
+    geometry: {
+        type: {
+            type: String,
+            enum: ['Point'],
+            required: true
+        },
+        coordinates: {
+            type: [Number],
+            required: true
+        }
+    },
     price: Number,
     description: String,
     location: String,

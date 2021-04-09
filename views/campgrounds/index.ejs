@@ -9,7 +9,9 @@
             <div class="card mb-3">
                 <div class="row">
                     <div class="col-md-4">
+                        <%if(campground.image.length){  %> 
                         <img src="<%=campground.image[0].url%> " alt="" class="img-fluid">
+                        <% } %> 
                     </div>
                     <div class="col-md-8">
                         <div class="card-body">
