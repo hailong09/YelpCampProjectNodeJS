@@ -12,6 +12,8 @@ const imageSchema = new Schema({
 imageSchema.virtual('thumbnail').get(function(){
      return this.url.replace('/upload','/upload/w_200')
 })
+
+const opts = {toJSON:{virtuals: true}};
 const campGroundSchema = new Schema({
     title: String,
     image: [
@@ -41,7 +43,11 @@ const campGroundSchema = new Schema({
             ref: 'Review'
         }
     ]
-})
+}, opts)
+campGroundSchema.virtual('properties.popUpMarkup').get(function(){
+    return `<a href="/campgrounds/${this._id}">${this.title}</a>`
+
+});
 
 //delele all reviews in when delete a campground middleware
 campGroundSchema.post('findOneAndDelete', async function(doc){
@@ -55,4 +61,7 @@ campGroundSchema.post('findOneAndDelete', async function(doc){
     }
 })
 
+
+
 module.exports = mongoose.model("Campground", campGroundSchema);
+
