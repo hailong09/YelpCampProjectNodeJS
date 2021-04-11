@@ -2,6 +2,7 @@ if(process.env.NODE_ENV !== "production"){
     require('dotenv').config();
 }
 const express = require('express');
+const helmet = require("helmet");
 const app = express();
 const path = require('path');
 const mongoose = require('mongoose');
@@ -14,6 +15,7 @@ const campgroundsRoutes = require('./routes/campgrounds');
 const reviewsRoutes = require('./routes/reviews');
 const User = require('./models/user');
 const usersRoutes = require('./routes/users');
+const mongoSanitize = require('express-mongo-sanitize');
 
 const passport = require('passport'),
       LocalStrategy = require('passport-local').Strategy;
@@ -38,6 +40,59 @@ app.engine("ejs", ejsMate)
 //Allow shoing req.body
 app.use(express.urlencoded({extended: true}));
 app.use(express.json());
+
+// To remove data, use:
+app.use(mongoSanitize());
+
+app.use(helmet());
+const scriptSrcUrls = [
+    "https://stackpath.bootstrapcdn.com/",
+    "https://api.tiles.mapbox.com/",
+    "https://api.mapbox.com/",
+    "https://kit.fontawesome.com/",
+    "https://cdnjs.cloudflare.com/",
+    "https://cdn.jsdelivr.net",
+    
+];
+const styleSrcUrls = [
+    "https://kit-free.fontawesome.com/",
+    "https://stackpath.bootstrapcdn.com/",
+    "https://api.mapbox.com/",
+    "https://api.tiles.mapbox.com/",
+    "https://fonts.googleapis.com/",
+    "https://use.fontawesome.com/",
+    "https://cdn.jsdelivr.net/",
+    
+];
+const connectSrcUrls = [
+    "https://api.mapbox.com/",
+    "https://a.tiles.mapbox.com/",
+    "https://b.tiles.mapbox.com/",
+    "https://events.mapbox.com/",
+];
+const fontSrcUrls = [];
+app.use(
+    helmet.contentSecurityPolicy({
+        directives: {
+            defaultSrc: [],
+            connectSrc: ["'self'", ...connectSrcUrls],
+            scriptSrc: ["'unsafe-inline'", "'self'", ...scriptSrcUrls],
+            styleSrc: ["'self'", "'unsafe-inline'", ...styleSrcUrls],
+            workerSrc: ["'self'", "blob:"],
+            objectSrc: [],
+            imgSrc: [
+                "'self'",
+                "blob:",
+                "data:",
+                "https://res.cloudinary.com/yelpcampnodejs/", //SHOULD MATCH YOUR CLOUDINARY ACCOUNT! 
+                "https://images.unsplash.com/",
+            ],
+            fontSrc: ["'self'", ...fontSrcUrls],
+        },
+    })
+);
+
+
 //methodoveride middleware
 app.use(methodOverride("_method"));
 app.use(express.static(path.join(__dirname, "public")));
@@ -45,11 +100,13 @@ app.use(express.static(path.join(__dirname, "public")));
 
 
 const sessionConfig = {
+    name: 'session',
     secret: 'thisshoudbeabettersecret',
     resave: false,
     saveUninitialized: true,
     cookie: {
-        httpOnly: true, 
+        httpOnly: true,
+        // secure: true, 
         expires: Date.now() + 1000 * 60 * 60 * 24 * 7,
         maxAge:1000 * 60 * 60 * 24 * 7, 
     }
