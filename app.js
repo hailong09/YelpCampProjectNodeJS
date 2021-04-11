@@ -16,11 +16,14 @@ const reviewsRoutes = require('./routes/reviews');
 const User = require('./models/user');
 const usersRoutes = require('./routes/users');
 const mongoSanitize = require('express-mongo-sanitize');
+// var MongoDBStore = require('connect-mongodb-session')(session);
+const MongoStore = require('connect-mongo');
 
 const passport = require('passport'),
       LocalStrategy = require('passport-local').Strategy;
+const dbUrl = process.env.DB_URL ||  'mongodb://localhost:27017/yelpCamp'
 //connect to mongodb
-mongoose.connect('mongodb://localhost:27017/yelpCamp', {useNewUrlParser: true, 
+mongoose.connect(dbUrl, {useNewUrlParser: true, 
 useUnifiedTopology: true, useCreateIndex:true,useFindAndModify: false});
 
 //get notified if we connect succesffulu or if a connection error occurs
@@ -96,12 +99,22 @@ app.use(
 //methodoveride middleware
 app.use(methodOverride("_method"));
 app.use(express.static(path.join(__dirname, "public")));
+const secret = process.env.SECRET || 'thisshouldbeabettersecret';
+const store = MongoStore.create({
+    mongoUrl: dbUrl,
+    secret,
+    touchAfter: 24 * 60 * 60
+});
 
+store.on("error", function (e) {
+    console.log("SESSION STORE ERROR", e)
+})
 
 
 const sessionConfig = {
+    store,
     name: 'session',
-    secret: 'thisshoudbeabettersecret',
+    secret,
     resave: false,
     saveUninitialized: true,
     cookie: {
